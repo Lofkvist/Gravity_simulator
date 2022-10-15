@@ -30,17 +30,17 @@ class Body():
     self.mass = mass
     self.x_vel = x_vel
     self.y_vel = y_vel
+    self.decay_const = self.mass*10 ** -8
 
     self.trail_color = trail_color
     self.trail = []
     self.time_of_creation = 0
-    self.decay_const = self.mass*10 ** -8
 
   def drawBody(self):
     pygame.draw.circle(WIN, WHITE, (self.x, self.y), self.radius, 0)
   
   def drawVelVector(self):
-    pygame.draw.line(WIN, RED, (self.x, self.y), (self.x + 10*self.x_vel, self.y + 10*self.y_vel))
+    pygame.draw.line(WIN, RED, (self.x, self.y), (self.x + 0.2*self.x_vel, self.y + 0.2*self.y_vel))
 
   def addTrailpoint(self):
     self.trail.append((self.x, self.y))
@@ -59,8 +59,16 @@ class Body():
   def drawTrail(self):
     for p in self.trail:
       pygame.draw.circle(WIN, self.trail_color, (p[0], p[1]), 1, 0)
+  
+  def drawData(self, font):
+    mass_text = font.render(f'Mass: {round(self.mass)} kg', False, WHITE)
+    vel_text = font.render(f'Velocity: {round(math.sqrt(self.x_vel**2 + self.y_vel**2)):,} m/s', False, WHITE)
 
-  def collision(self, other, bodies, r):
+    WIN.blit(mass_text, (self.x + self.radius, self.y - self.radius))
+    WIN.blit(vel_text, (self.x + self.radius, self.y - self.radius - 20))
+
+
+  def collision(self, other, bodies):
     if round(self.x_vel, 3) == round(other.x_vel, 3) and round(self.y_vel, 3) == round(other.y_vel, 3):
       if self.mass > other.mass:
         self.mass += other.mass
@@ -73,13 +81,11 @@ class Body():
 
     m1 = self.mass
     m2 = other.mass
-    v1 = math.sqrt(self.x_vel**2 + self.y_vel**2)
-    v2 = math.sqrt(other.x_vel**2 + other.y_vel**2)
 
     v_1 = np.array([self.x_vel, self.y_vel])
     pos_1 = np.array([self.x, self.y])
 
-    v_2 = np.array([other.x_vel, self.y_vel])
+    v_2 = np.array([other.x_vel, other.y_vel])
     pos_2 = np.array([other.x, other.y])
 
     v_1_new = v_1 - (pos_1 - pos_2) * (2 * m2/(m1 + m2)) * np.inner(v_1 - v_2, pos_1 - pos_2) / (np.inner(pos_1 - pos_2, pos_1 - pos_2)) 
@@ -88,14 +94,14 @@ class Body():
     self.x_vel, self.y_vel = v_1_new
     other.x_vel, other.y_vel = v_2_new
 
-    self.x += self.x_vel
-    self.y += self.y_vel
-    other.x += other.x_vel
-    other.y += other.y_vel
+    self.x += self.x_vel*(1/FPS)
+    self.y += self.y_vel*(1/FPS)
+    other.x += other.x_vel*(1/FPS)
+    other.y += other.y_vel*(1/FPS)
 
   def updatePosition(self):
-    self.x += self.x_vel
-    self.y += self.y_vel
+    self.x += self.x_vel*(1/FPS)
+    self.y += self.y_vel*(1/FPS)
 
   def updateVelocity(self, bodies, G, collison_bool):
     for other in bodies:
@@ -108,9 +114,13 @@ class Body():
         dY = self.y - other.y
         r = math.sqrt((dX)**2 + (dY)**2)
         
-        # Check for collision
-        if r <= self.radius + other.radius + 5 and collison_bool:
-          self.collision(other, bodies, r)
+        dX_next = (self.x + self.x_vel*(1/FPS)) - (other.x + other.x_vel*(1/FPS))
+        dY_next = (self.y + self.y_vel*(1/FPS)) - (other.y + other.y_vel*(1/FPS))
+        r_next = math.sqrt((dX_next)**2 + (dY_next)**2)
+
+        # Check for collision in next frame
+        if r_next <= self.radius + other.radius and collison_bool:
+          self.collision(other, bodies)
 
         else:
           F = -G * (self.mass * other.mass) / (r**2)

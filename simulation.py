@@ -3,6 +3,10 @@ from pygame.locals import *
 import math
 from body import Body
 
+#
+# Reviewed by Tom
+#
+
 pygame.init()
 pygame.font.init()
  
@@ -11,7 +15,7 @@ WINDOW_WIDTH = 1200
 WINDOW_HEIGHT = 700
 NAVBAR_HEIGHT = 100
 FPS = 70
-BACKGROUND = pygame.image.load("space_bg.png")
+BACKGROUND = pygame.image.load("./space_bg.png")
 pygame.display.set_caption('Newtonian Mechanics simulator')
 WIN = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 VEL_CONST = 0.02
@@ -32,13 +36,20 @@ TRAIL_COLORS = [MINT, PINK, ORANGE, PURPLE, GREEN, RED]
 def totalEnergy(bodies):
 	E = 0
 	for body in bodies:
-		v = math.sqrt(body.x_vel**2 + body.y_vel**2)
+		v = body.getVelocity()
 		E += (body.mass/2) * (v ** 2)
 	return round(E, 2)
 
 
 def inflate(x, y, time): # Inflate body
-	pygame.draw.circle(WIN, WHITE, (x, y), 10*time, 0)
+    pygame.draw.circle(WIN, WHITE, (x, y), 10*time, 0)
+    
+    (currpos_x, currpos_y) = pygame.mouse.get_pos()
+	
+    aim_pos = (2*x - currpos_x, 2*y - currpos_y)
+	
+
+    pygame.draw.line(WIN, MINT, (x, y), aim_pos, width=2)
 
 
 # Main game loop
@@ -167,8 +178,8 @@ def main():
 			body.drawBody()
 			body.drawVelVector()
 			body.drawData(font)
-
-			if frame%(FPS//8) == 1:
+					
+			if frame%(FPS//25) == 1:
 				body.addTrailpoint()
 
 			if TRAIL_SHOWN:
@@ -183,6 +194,7 @@ def main():
 
 			if body.x + body.x_vel*(1/FPS) - body.radius < 0 or body.x + body.x_vel*(1/FPS) + body.radius > WINDOW_WIDTH:
 				body.x_vel = -body.x_vel
+
 		pygame.display.update()
 
 if __name__ == '__main__':

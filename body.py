@@ -38,7 +38,10 @@ class Body():
 
     def drawBody(self):
         pygame.draw.circle(WIN, self.trail_color, (self.x, self.y), self.radius, 0)
-  
+
+    def getVelocity(self):
+        return(math.sqrt(self.x_vel ** 2 + self.y_vel **2))
+
     def drawVelVector(self):
         pygame.draw.line(WIN, RED, (self.x, self.y), (self.x + 0.2*self.x_vel, self.y + 0.2*self.y_vel))
 
@@ -62,7 +65,7 @@ class Body():
   
     def drawData(self, font):
         mass_text = font.render(f'Mass: {round(self.mass)} kg', False, WHITE)
-        vel_text = font.render(f'Velocity: {round(math.sqrt(self.x_vel**2 + self.y_vel**2)):,} m/s', False, WHITE)
+        vel_text = font.render(f'Velocity: {round(self.getVelocity())} m/s', False, WHITE)
 
         WIN.blit(mass_text, (self.x + self.radius, self.y - self.radius))
         WIN.blit(vel_text, (self.x + self.radius, self.y - self.radius - 20))
